@@ -43,6 +43,22 @@
   .upload-zone h2 { font-family: 'Instrument Serif', serif; font-size: 20px; font-weight: 400; color: #aaa; margin-bottom: 0.4rem; }
   .upload-zone p { font-size: 11px; color: #444; letter-spacing: 0.05em; }
 
+  .uploading-bar {
+    display: none;
+    background: #0d0d0d;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    font-size: 11px;
+    color: #888;
+    gap: 10px;
+    align-items: center;
+  }
+  .uploading-bar.active { display: flex; }
+  .uploading-bar .prog-track { flex: 1; height: 2px; background: #1e1e1e; border-radius: 2px; }
+  .uploading-bar .prog-fill { height: 100%; background: #c8b97a; border-radius: 2px; width: 0%; transition: width 0.2s; }
+
   .tracks-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
   .tracks-header h3 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #555; }
   .count-badge { font-size: 10px; background: #1a1a1a; color: #666; padding: 2px 10px; border-radius: 99px; border: 1px solid #2a2a2a; }
@@ -141,6 +157,15 @@
     font-size: 9px;
     vertical-align: middle;
   }
+
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1a; border: 1px solid #2a2a2a; color: #aaa;
+    font-size: 11px; padding: 8px 16px; border-radius: 8px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -158,13 +183,18 @@
     <p>MP3, WAV, FLAC, OGG desteklenir</p>
   </div>
 
+  <div class="uploading-bar" id="uploadingBar">
+    <span id="uploadingText">yükleniyor...</span>
+    <div class="prog-track"><div class="prog-fill" id="uploadProg"></div></div>
+  </div>
+
   <div class="tracks-header">
     <h3>parçalar</h3>
     <span class="count-badge" id="countBadge">0 parça</span>
   </div>
 
   <div class="track-list" id="trackList">
-    <div class="empty-state"><p>henüz parça yok</p></div>
+    <div class="empty-state"><p>yükleniyor...</p></div>
   </div>
 </div>
 
@@ -190,8 +220,13 @@
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-const STORAGE_KEY = 'sesler_tracks_v1';
+const SUPABASE_URL = 'https://zjsyoqkxhabkevgyaega.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc3lvcWt4aGFia2V2Z3lhZWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2ODA2MTAsImV4cCI6MjA5NDI1NjYxMH0.mrtRgw2y02CnAnBJNte2urvZy7Od_13-oQZ2_gPDwOo';
+const BUCKET = 'muzik';
+
 let tracks = [];
 let currentIdx = -1;
 let isPlaying = false;
@@ -208,6 +243,16 @@ const progFill = document.getElementById('progFill');
 const progTrack = document.getElementById('progTrack');
 const curTime = document.getElementById('curTime');
 const durTime = document.getElementById('durTime');
+const uploadingBar = document.getElementById('uploadingBar');
+const uploadProg = document.getElementById('uploadProg');
+const uploadingText = document.getElementById('uploadingText');
+const toastEl = document.getElementById('toast');
+
+function showToast(msg, duration = 2500) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), duration);
+}
 
 function fmt(s) {
   if (!s || isNaN(s)) return '0:00';
@@ -221,22 +266,35 @@ function fmtSize(b) {
   return (b/(1024*1024)).toFixed(1) + ' MB';
 }
 
-async function saveTracks() {
-  try {
-    const light = tracks.map(t => ({ id: t.id, name: t.name, size: t.size, dur: t.dur }));
-    await window.storage.set(STORAGE_KEY, JSON.stringify(light), true);
-  } catch(e) {}
+function getPublicUrl(path) {
+  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(path)}`;
 }
 
-async function loadTracks() {
+async function fetchTracks() {
   try {
-    const res = await window.storage.get(STORAGE_KEY, true);
-    if (res && res.value) {
-      const saved = JSON.parse(res.value);
-      tracks = saved.map(t => ({ ...t, url: null }));
-      renderTracks();
-    }
-  } catch(e) {}
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ limit: 200, offset: 0, prefix: '' })
+    });
+    const data = await res.json();
+    if (!Array.isArray(data)) { renderTracks(); return; }
+    tracks = data
+      .filter(f => f.name && f.name.match(/\.(mp3|wav|flac|ogg|m4a|aac)$/i))
+      .map(f => ({
+        name: f.name.replace(/\.[^.]+$/, ''),
+        path: f.name,
+        size: f.metadata?.size || 0,
+        url: getPublicUrl(f.name)
+      }));
+    renderTracks();
+  } catch(e) {
+    trackList.innerHTML = '<div class="empty-state"><p>bağlantı hatası</p></div>';
+  }
 }
 
 function renderTracks() {
@@ -255,39 +313,57 @@ function renderTracks() {
       </div>
       <div class="track-info">
         <div class="track-name">${t.name}</div>
-        <div class="track-meta">${t.size ? fmtSize(t.size) : ''}${t.dur && t.dur>0 ? (t.size?'  ·  ':'')+fmt(t.dur):''}</div>
+        <div class="track-meta">${t.size ? fmtSize(t.size) : ''}</div>
       </div>
-      <div class="track-dur">${t.dur && t.dur>0 ? fmt(t.dur) : '—'}</div>
+      <div class="track-dur">—</div>
       <button class="del-btn" onclick="deleteTrack(${i})" title="sil">✕</button>
     </div>
   `).join('');
 }
 
-function addFiles(files) {
-  Array.from(files).forEach(file => {
-    if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|flac|ogg|m4a|aac)$/i)) return;
-    const exists = tracks.some(t => t.name === file.name && t.size === file.size);
-    if (exists) return;
-    const url = URL.createObjectURL(file);
-    const track = { id: Date.now()+Math.random(), name: file.name.replace(/\.[^.]+$/,''), size: file.size, url, dur: 0 };
-    tracks.push(track);
-    const tmpAudio = new Audio(url);
-    tmpAudio.addEventListener('loadedmetadata', () => {
-      track.dur = tmpAudio.duration;
-      renderTracks();
-      saveTracks();
-    });
+async function uploadFile(file) {
+  const safeName = file.name;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(safeName)}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'apikey': SUPABASE_KEY,
+      'Content-Type': file.type || 'audio/mpeg',
+      'x-upsert': 'true'
+    },
+    body: file
   });
-  renderTracks();
-  saveTracks();
+  return res.ok;
+}
+
+async function addFiles(files) {
+  const audioFiles = Array.from(files).filter(f =>
+    f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|flac|ogg|m4a|aac)$/i)
+  );
+  if (!audioFiles.length) return;
+
+  uploadingBar.classList.add('active');
+
+  for (let i = 0; i < audioFiles.length; i++) {
+    const f = audioFiles[i];
+    uploadingText.textContent = `yükleniyor: ${f.name.replace(/\.[^.]+$/,'')}`;
+    uploadProg.style.width = ((i / audioFiles.length) * 100) + '%';
+    const ok = await uploadFile(f);
+    if (!ok) showToast(`${f.name} yüklenemedi`);
+  }
+
+  uploadProg.style.width = '100%';
+  setTimeout(() => {
+    uploadingBar.classList.remove('active');
+    uploadProg.style.width = '0%';
+  }, 600);
+
+  showToast(`${audioFiles.length} parça yüklendi ✓`);
+  await fetchTracks();
 }
 
 function playTrack(i) {
   if (!tracks[i]) return;
-  if (!tracks[i].url) {
-    alert('Bu parça bu oturumda yüklenmedi. Lütfen tekrar yükle.');
-    return;
-  }
   if (currentIdx === i && isPlaying) {
     audio.pause();
     isPlaying = false;
@@ -305,19 +381,23 @@ function playTrack(i) {
   renderTracks();
 }
 
-function deleteTrack(i) {
+async function deleteTrack(i) {
+  if (!confirm(`"${tracks[i].name}" silinsin mi?`)) return;
+  const path = tracks[i].path;
+
   if (currentIdx === i) {
-    audio.pause();
-    audio.src = '';
-    isPlaying = false;
-    currentIdx = -1;
+    audio.pause(); audio.src = '';
+    isPlaying = false; currentIdx = -1;
     playerBar.classList.remove('active');
-  } else if (currentIdx > i) {
-    currentIdx--;
-  }
-  tracks.splice(i, 1);
-  renderTracks();
-  saveTracks();
+  } else if (currentIdx > i) currentIdx--;
+
+  await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(path)}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY }
+  });
+
+  showToast('parça silindi');
+  await fetchTracks();
 }
 
 playPauseBtn.onclick = () => {
@@ -327,13 +407,9 @@ playPauseBtn.onclick = () => {
   renderTracks();
 };
 
-nextBtn.onclick = () => {
-  if (tracks.length === 0) return;
-  playTrack((currentIdx + 1) % tracks.length);
-};
-
+nextBtn.onclick = () => { if (tracks.length) playTrack((currentIdx + 1) % tracks.length); };
 prevBtn.onclick = () => {
-  if (tracks.length === 0) return;
+  if (!tracks.length) return;
   if (audio.currentTime > 3) { audio.currentTime = 0; return; }
   playTrack((currentIdx - 1 + tracks.length) % tracks.length);
 };
@@ -354,24 +430,17 @@ audio.addEventListener('timeupdate', () => {
 progTrack.addEventListener('click', e => {
   if (!audio.duration) return;
   const rect = progTrack.getBoundingClientRect();
-  const pct = (e.clientX - rect.left) / rect.width;
-  audio.currentTime = pct * audio.duration;
+  audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
 });
 
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
-
 fileInput.addEventListener('change', e => addFiles(e.target.files));
-
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag');
-  addFiles(e.dataTransfer.files);
-});
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); addFiles(e.dataTransfer.files); });
 
-loadTracks();
+fetchTracks();
 </script>
 </body>
 </html>
