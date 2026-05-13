@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0a;
+    color: #f0ede8;
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+  }
+
+  .grain {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.35;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+  header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 3.5rem; border-bottom: 1px solid #1e1e1e; padding-bottom: 1.5rem; }
+  .logo { font-family: 'Instrument Serif', serif; font-size: 28px; letter-spacing: -0.5px; color: #f0ede8; }
+  .logo span { color: #c8b97a; font-style: italic; }
+  .tagline { font-size: 11px; color: #555; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .upload-zone {
+    border: 1px dashed #2a2a2a;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: #c8b97a; background: #0f0f0f; }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 32px; color: #3a3a3a; margin-bottom: 0.75rem; }
+  .upload-zone h2 { font-family: 'Instrument Serif', serif; font-size: 20px; font-weight: 400; color: #aaa; margin-bottom: 0.4rem; }
+  .upload-zone p { font-size: 11px; color: #444; letter-spacing: 0.05em; }
+
+  .tracks-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .tracks-header h3 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #555; }
+  .count-badge { font-size: 10px; background: #1a1a1a; color: #666; padding: 2px 10px; border-radius: 99px; border: 1px solid #2a2a2a; }
+
+  .track-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .track {
+    display: grid;
+    grid-template-columns: 40px 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 0.85rem 1rem;
+    background: #0d0d0d;
+    border: 1px solid #191919;
+    border-radius: 8px;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .track:hover { border-color: #2a2a2a; background: #111; }
+  .track.playing { border-color: #c8b97a33; background: #12110e; }
+
+  .track-num {
+    font-size: 11px; color: #444; text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .track.playing .track-num { display: none; }
+  .play-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: none; border: 1px solid #2a2a2a;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #888; transition: all 0.15s;
+    font-size: 14px; display: none;
+  }
+  .track:hover .track-num { display: none; }
+  .track:hover .play-btn { display: flex; }
+  .track.playing .play-btn { display: flex; border-color: #c8b97a88; color: #c8b97a; }
+  .play-btn:hover { border-color: #c8b97a; color: #c8b97a; }
+
+  .track-info { min-width: 0; }
+  .track-name { font-size: 13px; color: #d8d4ce; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track.playing .track-name { color: #c8b97a; }
+  .track-meta { font-size: 10px; color: #444; margin-top: 2px; letter-spacing: 0.03em; }
+
+  .track-dur { font-size: 11px; color: #444; font-variant-numeric: tabular-nums; min-width: 36px; text-align: right; }
+
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    color: #2a2a2a; font-size: 15px;
+    padding: 4px; border-radius: 4px;
+    transition: color 0.15s;
+    line-height: 1;
+  }
+  .del-btn:hover { color: #c87a7a; }
+
+  .player-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #0a0a0a;
+    border-top: 1px solid #1a1a1a;
+    padding: 0.85rem 2rem;
+    z-index: 100;
+    display: none;
+  }
+  .player-bar.active { display: block; }
+  .player-inner { max-width: 780px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
+
+  .now-playing { min-width: 0; }
+  .now-name { font-size: 12px; color: #d8d4ce; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now-label { font-size: 10px; color: #444; margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .controls { display: flex; align-items: center; gap: 10px; justify-content: center; }
+  .ctrl-btn {
+    background: none; border: 1px solid #252525; color: #888;
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 13px; transition: all 0.15s;
+  }
+  .ctrl-btn:hover { border-color: #555; color: #d8d4ce; }
+  .ctrl-btn.main { border-color: #c8b97a55; color: #c8b97a; width: 40px; height: 40px; font-size: 16px; }
+  .ctrl-btn.main:hover { border-color: #c8b97a; }
+
+  .progress-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .time-lbl { font-size: 10px; color: #444; font-variant-numeric: tabular-nums; min-width: 32px; }
+  .prog-track { flex: 1; height: 2px; background: #1e1e1e; border-radius: 2px; cursor: pointer; max-width: 200px; position: relative; }
+  .prog-fill { height: 100%; background: #c8b97a; border-radius: 2px; width: 0%; transition: width 0.1s linear; pointer-events: none; }
+
+  audio { display: none; }
+
+  .empty-state { text-align: center; padding: 3rem 0; }
+  .empty-state p { font-size: 12px; color: #333; letter-spacing: 0.05em; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .track.playing .track-name::after {
+    content: ' ▶';
+    animation: pulse 1.5s ease-in-out infinite;
+    color: #c8b97a;
+    font-size: 9px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="wrap">
+  <header>
+    <div class="logo">ses<span>ler</span></div>
+    <div class="tagline">kişisel müzik arşivi</div>
+  </header>
+
+  <div class="upload-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="audio/mp3,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/*" multiple>
+    <div class="upload-icon">♪</div>
+    <h2>Şarkıları buraya sürükle ya da tıkla</h2>
+    <p>MP3, WAV, FLAC, OGG desteklenir</p>
+  </div>
+
+  <div class="tracks-header">
+    <h3>parçalar</h3>
+    <span class="count-badge" id="countBadge">0 parça</span>
+  </div>
+
+  <div class="track-list" id="trackList">
+    <div class="empty-state"><p>henüz parça yok</p></div>
+  </div>
+</div>
+
+<div class="player-bar" id="playerBar">
+  <audio id="audioEl"></audio>
+  <div class="player-inner">
+    <div class="now-playing">
+      <div class="now-label">şu an çalıyor</div>
+      <div class="now-name" id="nowName">—</div>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn" id="prevBtn" title="önceki">&#9664;&#9664;</button>
+      <button class="ctrl-btn main" id="playPauseBtn">&#9654;</button>
+      <button class="ctrl-btn" id="nextBtn" title="sonraki">&#9654;&#9654;</button>
+    </div>
+    <div class="progress-wrap">
+      <span class="time-lbl" id="curTime">0:00</span>
+      <div class="prog-track" id="progTrack">
+        <div class="prog-fill" id="progFill"></div>
+      </div>
+      <span class="time-lbl" id="durTime">0:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'sesler_tracks_v1';
+let tracks = [];
+let currentIdx = -1;
+let isPlaying = false;
+
+const audio = document.getElementById('audioEl');
+const trackList = document.getElementById('trackList');
+const playerBar = document.getElementById('playerBar');
+const countBadge = document.getElementById('countBadge');
+const nowName = document.getElementById('nowName');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progFill = document.getElementById('progFill');
+const progTrack = document.getElementById('progTrack');
+const curTime = document.getElementById('curTime');
+const durTime = document.getElementById('durTime');
+
+function fmt(s) {
+  if (!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+function fmtSize(b) {
+  if (b < 1024*1024) return (b/1024).toFixed(0) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+async function saveTracks() {
+  try {
+    const light = tracks.map(t => ({ id: t.id, name: t.name, size: t.size, dur: t.dur }));
+    await window.storage.set(STORAGE_KEY, JSON.stringify(light), true);
+  } catch(e) {}
+}
+
+async function loadTracks() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if (res && res.value) {
+      const saved = JSON.parse(res.value);
+      tracks = saved.map(t => ({ ...t, url: null }));
+      renderTracks();
+    }
+  } catch(e) {}
+}
+
+function renderTracks() {
+  countBadge.textContent = tracks.length + ' parça';
+  if (tracks.length === 0) {
+    trackList.innerHTML = '<div class="empty-state"><p>henüz parça yok</p></div>';
+    return;
+  }
+  trackList.innerHTML = tracks.map((t,i) => `
+    <div class="track${i===currentIdx?' playing':''}" id="trk-${i}" data-i="${i}">
+      <div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+        <span class="track-num">${String(i+1).padStart(2,'0')}</span>
+        <button class="play-btn" onclick="playTrack(${i})" title="çal">
+          ${i===currentIdx&&isPlaying?'&#9646;&#9646;':'&#9654;'}
+        </button>
+      </div>
+      <div class="track-info">
+        <div class="track-name">${t.name}</div>
+        <div class="track-meta">${t.size ? fmtSize(t.size) : ''}${t.dur && t.dur>0 ? (t.size?'  ·  ':'')+fmt(t.dur):''}</div>
+      </div>
+      <div class="track-dur">${t.dur && t.dur>0 ? fmt(t.dur) : '—'}</div>
+      <button class="del-btn" onclick="deleteTrack(${i})" title="sil">✕</button>
+    </div>
+  `).join('');
+}
+
+function addFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|flac|ogg|m4a|aac)$/i)) return;
+    const exists = tracks.some(t => t.name === file.name && t.size === file.size);
+    if (exists) return;
+    const url = URL.createObjectURL(file);
+    const track = { id: Date.now()+Math.random(), name: file.name.replace(/\.[^.]+$/,''), size: file.size, url, dur: 0 };
+    tracks.push(track);
+    const tmpAudio = new Audio(url);
+    tmpAudio.addEventListener('loadedmetadata', () => {
+      track.dur = tmpAudio.duration;
+      renderTracks();
+      saveTracks();
+    });
+  });
+  renderTracks();
+  saveTracks();
+}
+
+function playTrack(i) {
+  if (!tracks[i]) return;
+  if (!tracks[i].url) {
+    alert('Bu parça bu oturumda yüklenmedi. Lütfen tekrar yükle.');
+    return;
+  }
+  if (currentIdx === i && isPlaying) {
+    audio.pause();
+    isPlaying = false;
+    playPauseBtn.innerHTML = '&#9654;';
+    renderTracks();
+    return;
+  }
+  currentIdx = i;
+  audio.src = tracks[i].url;
+  audio.play();
+  isPlaying = true;
+  nowName.textContent = tracks[i].name;
+  playerBar.classList.add('active');
+  playPauseBtn.innerHTML = '&#9646;&#9646;';
+  renderTracks();
+}
+
+function deleteTrack(i) {
+  if (currentIdx === i) {
+    audio.pause();
+    audio.src = '';
+    isPlaying = false;
+    currentIdx = -1;
+    playerBar.classList.remove('active');
+  } else if (currentIdx > i) {
+    currentIdx--;
+  }
+  tracks.splice(i, 1);
+  renderTracks();
+  saveTracks();
+}
+
+playPauseBtn.onclick = () => {
+  if (currentIdx < 0) return;
+  if (isPlaying) { audio.pause(); isPlaying = false; playPauseBtn.innerHTML = '&#9654;'; }
+  else { audio.play(); isPlaying = true; playPauseBtn.innerHTML = '&#9646;&#9646;'; }
+  renderTracks();
+};
+
+nextBtn.onclick = () => {
+  if (tracks.length === 0) return;
+  playTrack((currentIdx + 1) % tracks.length);
+};
+
+prevBtn.onclick = () => {
+  if (tracks.length === 0) return;
+  if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+  playTrack((currentIdx - 1 + tracks.length) % tracks.length);
+};
+
+audio.addEventListener('ended', () => {
+  if (currentIdx < tracks.length - 1) playTrack(currentIdx + 1);
+  else { isPlaying = false; playPauseBtn.innerHTML = '&#9654;'; renderTracks(); }
+});
+
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  progFill.style.width = pct + '%';
+  curTime.textContent = fmt(audio.currentTime);
+  durTime.textContent = fmt(audio.duration);
+});
+
+progTrack.addEventListener('click', e => {
+  if (!audio.duration) return;
+  const rect = progTrack.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  audio.currentTime = pct * audio.duration;
+});
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+fileInput.addEventListener('change', e => addFiles(e.target.files));
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  addFiles(e.dataTransfer.files);
+});
+
+loadTracks();
+</script>
+</body>
+</html>
