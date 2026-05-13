@@ -401,47 +401,67 @@
     box-shadow: 0 4px 14px rgba(217,119,6,0.45);
   }
  
-  .right-area { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; min-width: 0; }
-  .progress-area { display: flex; align-items: center; gap: 9px; justify-content: flex-end; }
-  .volume-area   { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  /* Right area — progress + volume stacked, same width */
+  .right-area {
+    display: flex; flex-direction: column; gap: 7px;
+    align-items: stretch; min-width: 0; width: 220px;
+  }
+  .progress-area { display: flex; align-items: center; gap: 8px; }
+  .volume-area   { display: flex; align-items: center; gap: 8px; }
  
   .time-lbl {
     font-size: 10px; color: var(--text3);
     font-variant-numeric: tabular-nums;
-    min-width: 30px; text-align: center;
+    min-width: 28px; text-align: center; flex-shrink: 0;
   }
  
-  input[type=range] {
-    -webkit-appearance: none; appearance: none;
-    height: 3px; border-radius: 3px; outline: none; cursor: pointer;
-    background: linear-gradient(to right, var(--amber) 0%, var(--amber) var(--pct,0%), var(--border2) var(--pct,0%), var(--border2) 100%);
+  /* Slider wrapper — fills remaining space */
+  .slider-wrap {
+    flex: 1; display: flex; align-items: center;
+    height: 20px; /* tall hit area for mobile */
+    position: relative; cursor: pointer;
+    touch-action: none;
+  }
+  .slider-track {
+    position: absolute; left: 0; right: 0;
+    height: 3px; background: var(--border2);
+    border-radius: 3px; overflow: visible;
     transition: height 0.15s;
   }
-  input[type=range]:hover { height: 5px; }
-  input[type=range].prog-slider { width: 160px; }
-  input[type=range].vol-slider  { width: 88px; }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none;
-    width: 12px; height: 12px; border-radius: 50%;
-    background: var(--amber);
-    box-shadow: 0 0 4px rgba(217,119,6,0.45);
-    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  .slider-wrap:hover .slider-track,
+  .slider-wrap.dragging .slider-track { height: 5px; }
+  .slider-fill {
+    height: 100%; background: var(--amber);
+    border-radius: 3px; width: var(--pct, 0%);
+    pointer-events: none;
   }
-  input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.3); box-shadow: 0 0 8px rgba(217,119,6,0.6); }
-  input[type=range]::-moz-range-thumb {
-    width: 12px; height: 12px; border-radius: 50%;
-    background: var(--amber); border: none;
-    box-shadow: 0 0 4px rgba(217,119,6,0.45); cursor: pointer;
+  .slider-thumb {
+    position: absolute; top: 50%;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 5px rgba(217,119,6,0.5);
+    transform: translate(-50%, -50%);
+    left: var(--pct, 0%);
+    pointer-events: none;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .slider-wrap:hover .slider-thumb,
+  .slider-wrap.dragging .slider-thumb {
+    transform: translate(-50%, -50%) scale(1.25);
+    box-shadow: 0 0 10px rgba(217,119,6,0.6);
   }
  
+  /* Vol icon */
   .vol-btn {
     background: none; border: none; cursor: pointer;
-    color: var(--text3); padding: 0;
+    color: var(--text2); padding: 0;
     display: flex; align-items: center; justify-content: center;
-    width: 18px; flex-shrink: 0; transition: color 0.15s;
+    width: 22px; flex-shrink: 0; transition: color 0.15s;
   }
   .vol-btn:hover { color: var(--amber); }
-  .vol-btn svg { width: 15px; height: 15px; }
+  .vol-btn svg { width: 17px; height: 17px; }
+  /* spacer to align vol slider under progress slider */
+  .vol-spacer { width: 28px; flex-shrink: 0; }
  
   audio { display: none; }
  
@@ -484,11 +504,13 @@
     .track { gap: 10px; padding: 12px 10px; border-radius: 10px; }
     .track-name { font-size: 15px; }
     .track:hover { transform: translateX(0); }
-    input[type=range].prog-slider { width: 100px; }
-    input[type=range].vol-slider  { width: 70px; }
+    .right-area { width: 160px; }
     .player-inner { padding: 0 1rem; gap: 0.5rem; }
     .now-name { font-size: 15px; }
     .del-btn { opacity: 1; }
+    /* Mobile: larger thumb hit area */
+    .slider-thumb { width: 20px; height: 20px; }
+    .slider-wrap { height: 28px; }
   }
 </style>
 </head>
@@ -559,7 +581,12 @@
     <div class="right-area">
       <div class="progress-area">
         <span class="time-lbl" id="curTime">0:00</span>
-        <input type="range" class="prog-slider" id="progSlider" min="0" max="1000" value="0" step="1">
+        <div class="slider-wrap" id="progWrap" role="slider" aria-label="ilerleme">
+          <div class="slider-track">
+            <div class="slider-fill" id="progFill"></div>
+          </div>
+          <div class="slider-thumb" id="progThumb"></div>
+        </div>
         <span class="time-lbl" id="durTime">0:00</span>
       </div>
       <div class="volume-area">
@@ -569,7 +596,13 @@
             <path id="volWaves" d="M12.5 7.5a3.5 3.5 0 010 5M14.8 5.2a6.5 6.5 0 010 9.6" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
           </svg>
         </button>
-        <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" step="1">
+        <div class="slider-wrap" id="volWrap" role="slider" aria-label="ses seviyesi">
+          <div class="slider-track">
+            <div class="slider-fill" id="volFill"></div>
+          </div>
+          <div class="slider-thumb" id="volThumb"></div>
+        </div>
+        <div class="vol-spacer"></div>
       </div>
     </div>
   </div>
@@ -594,7 +627,6 @@ const playIcon = document.getElementById('playIcon');
 const pauseIcon = document.getElementById('pauseIcon');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
-const progSlider = document.getElementById('progSlider');
 const curTime = document.getElementById('curTime');
 const durTime = document.getElementById('durTime');
 const uploadProgress = document.getElementById('uploadProgress');
@@ -603,51 +635,100 @@ const uploadText = document.getElementById('uploadText');
 const toastEl = document.getElementById('toast');
 const dropOverlay = document.getElementById('dropOverlay');
 const sectionLabel = document.getElementById('sectionLabel');
-const volSlider = document.getElementById('volSlider');
 const volBtn = document.getElementById('volBtn');
 const volIcon = document.getElementById('volIcon');
+const progWrap  = document.getElementById('progWrap');
+const progFill  = document.getElementById('progFill');
+const progThumb = document.getElementById('progThumb');
+const volWrap   = document.getElementById('volWrap');
+const volFill   = document.getElementById('volFill');
+const volThumb  = document.getElementById('volThumb');
  
-let lastVol = 80, isMuted = false;
+let lastVol = 80, isMuted = false, isSeeking = false;
+let volPct = 0.8; // 0-1
  
-function updateSlider(el) {
-  const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
-  el.style.setProperty('--pct', pct + '%');
+/* ── Custom slider helper ── */
+function setSliderPct(fill, thumb, pct) {
+  const p = Math.max(0, Math.min(1, pct));
+  const css = (p * 100).toFixed(2) + '%';
+  fill.style.width = css;
+  thumb.style.left  = css;
 }
  
+function getPctFromEvent(wrap, e) {
+  const r = wrap.getBoundingClientRect();
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  return Math.max(0, Math.min(1, (x - r.left) / r.width));
+}
+ 
+function makeSlider(wrap, onDrag, onEnd) {
+  let active = false;
+  function start(e) {
+    active = true; wrap.classList.add('dragging');
+    onDrag(getPctFromEvent(wrap, e));
+    e.preventDefault();
+  }
+  function move(e) {
+    if (!active) return;
+    onDrag(getPctFromEvent(wrap, e));
+    e.preventDefault();
+  }
+  function end(e) {
+    if (!active) return;
+    active = false; wrap.classList.remove('dragging');
+    if (onEnd) onEnd(getPctFromEvent(wrap, e.type === 'touchend' ? e.changedTouches[0] : e));
+  }
+  wrap.addEventListener('mousedown',  start, {passive: false});
+  wrap.addEventListener('touchstart', start, {passive: false});
+  document.addEventListener('mousemove',  move, {passive: false});
+  document.addEventListener('touchmove',  move, {passive: false});
+  document.addEventListener('mouseup',  end);
+  document.addEventListener('touchend', end);
+}
+ 
+/* ── Progress slider ── */
+makeSlider(progWrap,
+  (pct) => {
+    isSeeking = true;
+    setSliderPct(progFill, progThumb, pct);
+    if (audio.duration) curTime.textContent = fmt(pct * audio.duration);
+  },
+  (pct) => {
+    if (audio.duration) audio.currentTime = pct * audio.duration;
+    isSeeking = false;
+  }
+);
+ 
+/* ── Volume slider ── */
 const volHighSVG = `<path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z"/><path d="M12.5 7.5a3.5 3.5 0 010 5M14.8 5.2a6.5 6.5 0 010 9.6" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
 const volLowSVG  = `<path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z"/><path d="M12.5 7.5a3.5 3.5 0 010 5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
 const volMuteSVG = `<path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z" opacity="0.35"/><path d="M13 8.5l3 3m0-3l-3 3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
  
-function setVolIcon(val) {
-  if (val === 0 || isMuted) volIcon.innerHTML = volMuteSVG;
-  else if (val < 40) volIcon.innerHTML = volLowSVG;
+function setVolIcon(pct) {
+  if (pct === 0 || isMuted) volIcon.innerHTML = volMuteSVG;
+  else if (pct < 0.4) volIcon.innerHTML = volLowSVG;
   else volIcon.innerHTML = volHighSVG;
 }
  
-updateSlider(volSlider);
-setVolIcon(80);
-audio.volume = 0.8;
+function applyVol(pct) {
+  volPct = Math.max(0, Math.min(1, pct));
+  audio.volume = volPct;
+  setSliderPct(volFill, volThumb, volPct);
+  setVolIcon(volPct);
+}
  
-volSlider.addEventListener('input', () => {
-  isMuted = false;
-  lastVol = parseInt(volSlider.value);
-  audio.volume = lastVol / 100;
-  updateSlider(volSlider);
-  setVolIcon(lastVol);
-});
+makeSlider(volWrap,
+  (pct) => { isMuted = false; lastVol = pct; applyVol(pct); },
+  null
+);
  
 volBtn.addEventListener('click', () => {
   isMuted = !isMuted;
-  if (isMuted) {
-    volSlider.value = 0;
-    audio.volume = 0;
-  } else {
-    volSlider.value = lastVol || 80;
-    audio.volume = (lastVol || 80) / 100;
-  }
-  updateSlider(volSlider);
-  setVolIcon(isMuted ? 0 : parseInt(volSlider.value));
+  if (isMuted) { audio.volume = 0; setSliderPct(volFill, volThumb, 0); setVolIcon(0); }
+  else { applyVol(lastVol || 0.8); }
 });
+ 
+applyVol(0.8);
  
 function showToast(msg, dur=2500) {
   toastEl.textContent = msg;
@@ -712,7 +793,7 @@ function renderTracks() {
     return;
   }
   trackList.innerHTML = tracks.map((t,i) => `
-    <div class="track${i===currentIdx?' playing':''}" data-i="${i}" onclick="handleTrackClick(${i})">
+    <div class="track${i===currentIdx?' playing':''}" data-i="${i}" onclick="handleTrackClick(${i})" ontouchend="handleTouchPlay(event,${i})">
       <div class="track-num-wrap">
         <span class="track-num">${String(i+1).padStart(2,'0')}</span>
         <span class="track-play-icon">
@@ -733,6 +814,12 @@ function renderTracks() {
   `).join('');
 }
  
+function handleTouchPlay(e, i) {
+  // On mobile: touchend fires before click, prevent ghost click, play directly
+  e.preventDefault();
+  handleTrackClick(i);
+}
+ 
 function handleTrackClick(i) {
   if (currentIdx === i && isPlaying) {
     audio.pause(); setPlayState(false); renderTracks();
@@ -744,7 +831,7 @@ function handleTrackClick(i) {
 function playTrack(i) {
   if (!tracks[i]) return;
   currentIdx = i;
-  progSlider.value = 0; updateSlider(progSlider);
+  setSliderPct(progFill, progThumb, 0);
   curTime.textContent = '0:00'; durTime.textContent = '0:00';
   audio.src = tracks[i].url;
   audio.play().catch(()=>{});
@@ -810,26 +897,14 @@ audio.addEventListener('ended', () => {
   if (currentIdx < tracks.length-1) playTrack(currentIdx+1);
   else { setPlayState(false); renderTracks(); }
 });
-let isSeeking = false;
 audio.addEventListener('timeupdate', () => {
   if (!audio.duration || isSeeking) return;
   const pct = audio.currentTime / audio.duration;
-  progSlider.value = Math.round(pct * 1000);
-  updateSlider(progSlider);
+  setSliderPct(progFill, progThumb, pct);
   curTime.textContent = fmt(audio.currentTime);
   durTime.textContent = fmt(audio.duration);
   const d = document.getElementById('dur-'+currentIdx);
   if (d && d.textContent==='—') d.textContent = fmt(audio.duration);
-});
-progSlider.addEventListener('mousedown', () => { isSeeking = true; });
-progSlider.addEventListener('touchstart', () => { isSeeking = true; }, {passive:true});
-progSlider.addEventListener('input', () => {
-  updateSlider(progSlider);
-  if (audio.duration) curTime.textContent = fmt((progSlider.value/1000)*audio.duration);
-});
-progSlider.addEventListener('change', () => {
-  if (audio.duration) audio.currentTime = (progSlider.value/1000)*audio.duration;
-  isSeeking = false;
 });
  
 document.getElementById('fileInput').addEventListener('change', e => addFiles(e.target.files));
