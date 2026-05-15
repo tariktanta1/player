@@ -1,845 +1,259 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#080810">
-<title>sesler</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #080810;
-  --bg2: #0d0d1a;
-  --glass: rgba(255,255,255,0.04);
-  --glass2: rgba(255,255,255,0.08);
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --txt: #f0eeff;
-  --txt2: #8882aa;
-  --ac: #a78bfa;
-  --ac2: #7c3aed;
-  --ac3: #c4b5fd;
-  --red: #f87171;
-  --barh: 148px;
-  --r: 16px;
-}
- 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
- 
-html, body {
-  width: 100%; min-height: 100%;
-  overflow-x: hidden;
-  background: var(--bg);
-  overscroll-behavior: none;
-  -webkit-font-smoothing: antialiased;
-}
- 
-body {
-  font-family: 'Inter', sans-serif;
-  color: var(--txt);
-  background:
-    radial-gradient(ellipse 80% 60% at 20% -10%, rgba(124,58,237,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 85% 110%, rgba(167,139,250,0.10) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(16,14,40,1) 0%, transparent 100%),
-    linear-gradient(180deg, #080810 0%, #0b0b18 100%);
-}
- 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.2); border-radius: 99px; }
- 
-/* ── LAYOUT ── */
-.wrap { max-width: 860px; margin: 0 auto; padding: 32px 16px calc(var(--barh) + 24px); }
- 
-/* ── HEADER ── */
-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding-bottom: 20px; margin-bottom: 28px;
-  border-bottom: 1px solid var(--border);
-}
- 
-.logo-wrap { display: flex; align-items: baseline; gap: 12px; }
-.logo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 36px; font-weight: 300; letter-spacing: -1px;
-  color: var(--txt);
-  line-height: 1;
-}
-.logo em { font-style: italic; color: var(--ac3); }
-.sub {
-  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--txt2); font-weight: 500;
-}
- 
-.hdr-right { display: flex; align-items: center; gap: 10px; }
- 
-.pill {
-  padding: 6px 14px; border-radius: 999px;
-  background: var(--glass); border: 1px solid var(--border);
-  font-size: 11px; color: var(--txt2); font-weight: 400;
-  letter-spacing: 0.04em;
-}
-.pill b { color: var(--ac3); font-weight: 600; }
- 
-.up-btn {
-  position: relative;
-  display: flex; align-items: center; gap: 7px;
-  padding: 8px 16px; border-radius: 999px;
-  background: linear-gradient(135deg, var(--ac), var(--ac2));
-  border: none; color: #fff; font-size: 11px; font-weight: 600;
-  letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
-  box-shadow: 0 4px 20px rgba(124,58,237,0.4);
-}
-.up-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-.up-btn:active { transform: scale(0.97); }
-.up-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.up-btn svg { width: 12px; height: 12px; }
- 
-/* ── UPLOAD PROGRESS ── */
-.upload-prog {
-  display: none; align-items: center; gap: 12px;
-  background: var(--glass); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 14px 18px;
-  margin-bottom: 20px; font-size: 11px; color: var(--txt2);
-}
-.upload-prog.active { display: flex; }
-.upload-prog .bar-wrap { flex: 1; height: 2px; background: var(--border); border-radius: 99px; overflow: hidden; }
-.upload-prog .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--ac), var(--ac3)); border-radius: 99px; transition: width 0.3s; }
-#uptext { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
- 
-/* ── SECTION LABEL ── */
-.sec-label {
-  display: flex; align-items: center; gap: 12px;
-  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--txt2); margin-bottom: 12px;
-}
-.sec-label::after { content: ''; height: 1px; background: var(--border); flex: 1; }
- 
-/* ── TRACK LIST ── */
-.list { display: flex; flex-direction: column; gap: 4px; }
- 
-.trk {
-  display: grid;
-  grid-template-columns: 36px 1fr auto auto;
-  gap: 10px; align-items: center;
-  padding: 13px 14px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
-  position: relative;
-  overflow: hidden;
-}
-.trk::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(167,139,250,0.06), transparent);
-  opacity: 0; transition: opacity 0.3s;
-}
-.trk:hover { background: var(--glass); border-color: var(--border); }
-.trk:hover::before { opacity: 1; }
-.trk:active { transform: scale(0.99); }
-.trk.playing {
-  background: rgba(167,139,250,0.06);
-  border-color: rgba(167,139,250,0.2);
-}
-.trk.playing::before { opacity: 1; }
- 
-.num {
-  font-size: 11px; color: var(--txt2); text-align: center;
-  font-variant-numeric: tabular-nums; font-weight: 400;
-  transition: opacity 0.2s;
-}
-.trk.playing .num { opacity: 0; }
- 
-.trk-art {
-  width: 36px; height: 36px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif; font-size: 16px; color: rgba(255,255,255,0.5);
-  flex-shrink: 0; position: relative; overflow: hidden;
-}
-.play-ind {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.4);
-  opacity: 0; transition: opacity 0.2s;
-}
-.play-ind svg { width: 14px; height: 14px; color: #fff; }
-.trk:hover .play-ind { opacity: 1; }
-.trk.playing .play-ind { opacity: 1; }
- 
-.trk-info { min-width: 0; }
-.tname {
-  font-size: 13px; font-weight: 400; color: var(--txt);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  transition: color 0.2s;
-}
-.trk.playing .tname { color: var(--ac3); font-style: italic; }
-.tmeta { font-size: 10px; color: var(--txt2); margin-top: 2px; letter-spacing: 0.03em; }
- 
-.dur { font-size: 11px; color: var(--txt2); min-width: 32px; text-align: right; font-variant-numeric: tabular-nums; }
- 
-.del {
-  width: 26px; height: 26px; border-radius: 8px;
-  background: none; border: none; cursor: pointer;
-  color: rgba(255,255,255,0.15); font-size: 12px;
-  display: flex; align-items: center; justify-content: center;
-  transition: color 0.2s, background 0.2s;
-}
-.del:hover { color: var(--red); background: rgba(248,113,113,0.1); }
- 
-/* ── EMPTY STATE ── */
-.empty {
-  text-align: center; padding: 80px 0;
-}
-.empty-icon {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 64px; color: rgba(167,139,250,0.15);
-  display: block; margin-bottom: 12px; line-height: 1;
-}
-.empty p { font-size: 12px; color: var(--txt2); letter-spacing: 0.05em; }
- 
-/* ── NOW PLAYING BAR ── */
-.bar {
-  position: fixed; left: 0; right: 0; bottom: 0;
-  height: var(--barh);
-  transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
-  z-index: 100;
-}
-.bar.active { transform: translateY(0); }
- 
-.bar-bg {
-  position: absolute; inset: 0;
-  background: rgba(12,10,24,0.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-top: 1px solid var(--border);
-}
- 
-.bar-inner {
-  position: relative; z-index: 1;
-  height: 100%; max-width: 860px;
-  margin: 0 auto; padding: 0 16px;
-  display: grid; grid-template-columns: 1fr;
-  align-content: center; gap: 10px;
-}
- 
-/* mobile bar */
-.m-prog {
-  display: flex; align-items: center; gap: 10px;
-}
-.m-bot {
-  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
-}
-.m-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 17px; font-style: italic; font-weight: 400;
-  color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.m-ctrl { display: flex; gap: 6px; align-items: center; }
- 
-/* desktop bar — hidden on mobile */
-.d-left, .d-center, .d-right { display: none; }
- 
-/* ── CONTROLS ── */
-.btn {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--glass2); border: 1px solid var(--border);
-  color: var(--txt2); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
-}
-.btn:hover { border-color: var(--border2); color: var(--txt); }
-.btn:active { transform: scale(0.93); }
-.btn svg { width: 13px; height: 13px; }
- 
-.btn.main {
-  width: 46px; height: 46px;
-  background: linear-gradient(135deg, var(--ac), var(--ac2));
-  border: none; color: #fff;
-  box-shadow: 0 4px 16px rgba(124,58,237,0.45);
-}
-.btn.main:hover { box-shadow: 0 6px 24px rgba(124,58,237,0.6); transform: scale(1.04); }
-.btn.main svg { width: 16px; height: 16px; }
- 
-/* ── SEEKBAR / VOLUME ── */
-.t { font-size: 10px; color: var(--txt2); min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; }
- 
-.sw {
-  position: relative; flex: 1; height: 20px;
-  touch-action: none; cursor: pointer;
-}
-.sw-track {
-  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
-  height: 3px; border-radius: 99px;
-  background: var(--border2);
-  overflow: hidden;
-}
-.sw-fill {
-  height: 100%; width: 0%;
-  background: linear-gradient(90deg, var(--ac), var(--ac3));
-  border-radius: 99px;
-}
-.sw-thumb {
-  position: absolute; left: 0; top: 50%; transform: translate(-50%,-50%);
-  width: 14px; height: 14px; border-radius: 50%;
-  background: #fff; border: 3px solid var(--ac);
-  box-shadow: 0 0 8px rgba(167,139,250,0.5);
-  transition: transform 0.1s;
-}
-.sw:hover .sw-thumb { transform: translate(-50%,-50%) scale(1.2); }
- 
-/* ── FULL SCREEN SHEET (mobile) ── */
-.sheet {
-  position: fixed; inset: 0; z-index: 200;
-  display: flex; flex-direction: column;
-  padding: max(env(safe-area-inset-top), 20px) 20px calc(20px + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(ellipse 100% 60% at 30% 0%, rgba(124,58,237,0.2) 0%, transparent 55%),
-    linear-gradient(180deg, #0e0a1e 0%, #080810 100%);
-  transform: translateY(100%);
-  transition: transform 0.5s cubic-bezier(0.2,1,0.2,1);
-  overflow: hidden;
-}
-.sheet.active { transform: translateY(0); }
-.sheet.spring { transition: transform 0.6s cubic-bezier(0.16,1.18,0.22,1); }
- 
-.sheet-handle {
-  width: 40px; height: 4px; border-radius: 99px;
-  background: rgba(255,255,255,0.15); margin: 0 auto 16px;
-}
- 
-.sheet-top {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 20px;
-}
-.sheet-label { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--txt2); }
-.sheet-close {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--glass2); border: 1px solid var(--border);
-  color: var(--txt2); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 14px;
-}
- 
-.art-wrap {
-  width: min(76vw, 320px); aspect-ratio: 1;
-  margin: 0 auto 24px;
-  border-radius: 20px; overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
-}
-.art-box {
-  width: 100%; height: 100%;
-  display: flex; align-items: flex-end; padding: 16px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px; color: rgba(255,255,255,0.6);
-}
- 
-.s-name {
-  text-align: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px; font-weight: 300; font-style: italic;
-  color: var(--txt); margin-bottom: 4px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.s-sub {
-  text-align: center; font-size: 9px; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--txt2); margin-bottom: 20px;
-}
- 
-.s-prog { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-.s-ctrl { display: flex; justify-content: center; gap: 16px; align-items: center; margin-bottom: 20px; }
-.s-ctrl .btn { width: 52px; height: 52px; }
-.s-ctrl .btn.main { width: 68px; height: 68px; box-shadow: 0 8px 32px rgba(124,58,237,0.55); }
-.s-ctrl .btn svg { width: 18px; height: 18px; }
-.s-ctrl .btn.main svg { width: 22px; height: 22px; }
-.s-vol { display: flex; align-items: center; gap: 10px; }
-.vb { background: none; border: none; cursor: pointer; color: var(--txt2); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-.vb svg { width: 18px; height: 18px; }
- 
-/* ── TOAST ── */
-.toast {
-  position: fixed; left: 50%;
-  bottom: calc(var(--barh) + 16px);
-  transform: translate(-50%, 8px); opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
-  background: rgba(20,16,40,0.95);
-  border: 1px solid var(--border2);
-  backdrop-filter: blur(16px);
-  padding: 8px 16px; border-radius: 999px;
-  font-size: 11px; color: var(--ac3); z-index: 300;
-  pointer-events: none; white-space: nowrap;
-}
-.toast.show { opacity: 1; transform: translate(-50%, 0); }
- 
-/* ── DESKTOP ── */
-@media (min-width: 900px) {
-  :root { --barh: 80px; }
-  .logo { font-size: 44px; }
-  .wrap { padding: 40px 24px calc(var(--barh) + 28px); }
-  .trk { padding: 14px 16px; }
-  .tname { font-size: 14px; }
-  .del { opacity: 0; transition: opacity 0.15s, color 0.2s; }
-  .trk:hover .del { opacity: 1; }
- 
-  /* hide mobile bar elements */
-  .m-prog, .m-bot { display: none; }
-  .sheet { display: none; }
- 
-  /* show desktop bar */
-  .bar-inner {
-    grid-template-columns: 1.2fr auto 1.2fr;
-    align-items: center; gap: 20px;
-  }
-  .d-left, .d-center, .d-right { display: flex; }
- 
-  .d-left { flex-direction: column; justify-content: center; min-width: 0; }
-  .d-now-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--txt2); margin-bottom: 4px; }
-  .d-now-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 18px; font-style: italic; font-weight: 300;
-    color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
- 
-  .d-center { align-items: center; gap: 12px; justify-content: center; }
-  .d-center .btn { width: 38px; height: 38px; }
-  .d-center .btn.main { width: 48px; height: 48px; }
- 
-  .d-right { flex-direction: column; gap: 6px; align-items: flex-end; }
-  .d-seek { display: flex; align-items: center; gap: 8px; width: 100%; }
-  .d-vol { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
-  .d-vol .sw { max-width: 100px; }
-}
- 
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.trk { animation: fadeUp 0.3s ease both; }
-.trk:nth-child(1) { animation-delay: 0ms; }
-.trk:nth-child(2) { animation-delay: 30ms; }
-.trk:nth-child(3) { animation-delay: 60ms; }
-.trk:nth-child(4) { animation-delay: 90ms; }
-.trk:nth-child(5) { animation-delay: 120ms; }
-.trk:nth-child(n+6) { animation-delay: 150ms; }
- 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-.trk.playing .tname::after {
-  content: '';
-  display: inline-block; width: 5px; height: 5px;
-  border-radius: 50%; background: var(--ac3);
-  margin-left: 8px; vertical-align: middle;
-  animation: pulse 1.4s ease-in-out infinite;
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- iOS tam ekran + status bar rengi -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Android + tarayıcı üst çubuk rengi -->
+  <meta name="theme-color" content="#0a0800">
+
+  <title>sesler</title>
+
+  <!-- Fontlar -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
- 
-<div class="wrap">
-  <header>
-    <div class="logo-wrap">
-      <div>
-        <div class="logo">ses<em>ler</em></div>
-        <div class="sub">müzik arşivi</div>
+
+  <!-- Arka plan dokusu -->
+  <div class="bg-grain" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════
+       ANA İÇERİK
+  ══════════════════════════════════ -->
+  <main class="wrap" id="main">
+
+    <!-- HEADER -->
+    <header class="hdr">
+      <div class="hdr-brand">
+        <h1 class="logo">ses<em>ler</em></h1>
+        <span class="logo-sub">müzik arşivi</span>
+      </div>
+      <div class="hdr-actions">
+        <div class="pill" id="countPill"><span id="count">0</span> parça</div>
+        <label class="upload-btn" id="uploadBtn">
+          <input type="file" id="fileInput" accept="audio/*" multiple>
+          <svg class="upload-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 14V4M5 8l5-5 5 5M3 17h14"/>
+          </svg>
+          <span>Yükle</span>
+        </label>
+      </div>
+    </header>
+
+    <!-- YÜKLEME ÇUBUĞU -->
+    <div class="upload-progress" id="uploadProgress">
+      <div class="up-info">
+        <span class="up-label">yükleniyor</span>
+        <span class="up-filename" id="upFilename">—</span>
+      </div>
+      <div class="up-track">
+        <div class="up-fill" id="upFill"></div>
+      </div>
+      <span class="up-pct" id="upPct">0%</span>
+    </div>
+
+    <!-- PARÇALAR BAŞLIĞI -->
+    <div class="section-hdr" id="sectionHdr">
+      <span class="section-title">Parçalar</span>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- PARÇA LİSTESİ -->
+    <div class="track-list" id="trackList">
+      <!-- JS ile doldurulur -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-note">♩</div>
+        <p>Henüz parça yok</p>
+        <span>Yükle butonuna bas ya da dosyaları sürükle</span>
       </div>
     </div>
-    <div class="hdr-right">
-      <div class="pill"><b id="count">0</b> parça</div>
-      <label class="up-btn">
-        <input id="file" type="file" accept="audio/*" multiple>
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M8 11V3M4 6l4-4 4 4M2 13h12"/>
-        </svg>
-        Yükle
-      </label>
-    </div>
-  </header>
- 
-  <div class="upload-prog" id="upbar">
-    <span id="uptext">yükleniyor...</span>
-    <div class="bar-wrap"><div class="bar-fill" id="upfill"></div></div>
-    <span id="uppct">0%</span>
-  </div>
- 
-  <div class="sec-label" id="seclbl" style="display:none">Parçalar</div>
-  <div class="list" id="list">
-    <div class="empty">
-      <span class="empty-icon">♩</span>
-      <p>henüz parça yok — yükle</p>
-    </div>
-  </div>
-</div>
- 
-<!-- PLAYER BAR -->
-<div id="bar" class="bar">
-  <audio id="audio"></audio>
-  <div class="bar-bg"></div>
-  <div class="bar-inner">
- 
-    <!-- MOBILE -->
-    <div class="m-prog">
-      <span id="mct" class="t">0:00</span>
-      <div id="mpw" class="sw"><div class="sw-track"><div id="mpf" class="sw-fill"></div></div><div id="mpt" class="sw-thumb"></div></div>
-      <span id="mdt" class="t">0:00</span>
-    </div>
-    <div class="m-bot">
-      <div id="mnow" class="m-name">—</div>
-      <div class="m-ctrl">
-        <button id="mprev" class="btn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 3h1.5v10H3zm9.5 1.5L7 8l5.5 3.5V4.5z"/></svg></button>
-        <button id="mpp" class="btn main">
-          <svg id="mpi" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5l8 4.5-8 4.5V3.5z"/></svg>
-          <svg id="mpai" viewBox="0 0 16 16" fill="currentColor" style="display:none"><path d="M5 3h2v10H5zm4 0h2v10H9z"/></svg>
-        </button>
-        <button id="mnext" class="btn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 3H13v10h-1.5zm-9 1.5L7 8 2.5 11.5V4.5z"/></svg></button>
+
+  </main>
+
+  <!-- ══════════════════════════════════
+       OYNATICI ÇUBUĞU (her zaman altta)
+  ══════════════════════════════════ -->
+  <div class="player-bar" id="playerBar">
+    <audio id="audioEl" preload="none"></audio>
+
+    <div class="player-inner">
+
+      <!-- MOBİL: İLERLEME ÇUBUĞU (üstte) -->
+      <div class="seek-row mobile-only">
+        <span class="time-label" id="mCurTime">0:00</span>
+        <div class="seek-wrap" id="mSeekWrap">
+          <div class="seek-track">
+            <div class="seek-fill" id="mSeekFill"></div>
+          </div>
+          <div class="seek-thumb" id="mSeekThumb"></div>
+        </div>
+        <span class="time-label" id="mDurTime">0:00</span>
       </div>
-    </div>
- 
-    <!-- DESKTOP LEFT -->
-    <div class="d-left">
-      <div class="d-now-label">Şu an çalıyor</div>
-      <div id="dnow" class="d-now-name">—</div>
-    </div>
- 
-    <!-- DESKTOP CENTER -->
-    <div class="d-center">
-      <button id="dprev" class="btn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 3h1.5v10H3zm9.5 1.5L7 8l5.5 3.5V4.5z"/></svg></button>
-      <button id="dpp" class="btn main">
-        <svg id="dpi" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5l8 4.5-8 4.5V3.5z"/></svg>
-        <svg id="dpai" viewBox="0 0 16 16" fill="currentColor" style="display:none"><path d="M5 3h2v10H5zm4 0h2v10H9z"/></svg>
-      </button>
-      <button id="dnext" class="btn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 3H13v10h-1.5zm-9 1.5L7 8 2.5 11.5V4.5z"/></svg></button>
-    </div>
- 
-    <!-- DESKTOP RIGHT -->
-    <div class="d-right">
-      <div class="d-seek">
-        <span id="dct" class="t">0:00</span>
-        <div id="dpw" class="sw"><div class="sw-track"><div id="dpf" class="sw-fill"></div></div><div id="dpt" class="sw-thumb"></div></div>
-        <span id="ddt" class="t">0:00</span>
-      </div>
-      <div class="d-vol">
-        <button id="dvb" class="vb">
-          <svg id="dvi" viewBox="0 0 20 20" fill="currentColor"><path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z"/><path d="M12.5 7.5a3.5 3.5 0 010 5M14.8 5.2a6.5 6.5 0 010 9.6" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
-        </button>
-        <div id="dvw" class="sw"><div class="sw-track"><div id="dvf" class="sw-fill"></div></div><div id="dvt" class="sw-thumb"></div></div>
-      </div>
-    </div>
- 
-  </div>
-</div>
- 
-<!-- FULL SCREEN SHEET (mobile) -->
-<div id="sheet" class="sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-top">
-    <div class="sheet-label">Şu an çalıyor</div>
-    <button id="sclose" class="sheet-close">✕</button>
-  </div>
-  <div class="art-wrap">
-    <div id="artbox" class="art-box"></div>
-  </div>
-  <div id="snow" class="s-name">—</div>
-  <div class="s-sub">SESLER</div>
-  <div class="s-prog">
-    <span id="sct" class="t">0:00</span>
-    <div id="spw" class="sw"><div class="sw-track"><div id="spf" class="sw-fill"></div></div><div id="spt" class="sw-thumb"></div></div>
-    <span id="sdt" class="t">0:00</span>
-  </div>
-  <div class="s-ctrl">
-    <button id="sprev" class="btn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 3h1.5v10H3zm9.5 1.5L7 8l5.5 3.5V4.5z"/></svg></button>
-    <button id="spp" class="btn main">
-      <svg id="spi" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5l8 4.5-8 4.5V3.5z"/></svg>
-      <svg id="spai" viewBox="0 0 16 16" fill="currentColor" style="display:none"><path d="M5 3h2v10H5zm4 0h2v10H9z"/></svg>
-    </button>
-    <button id="snext" class="btn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 3H13v10h-1.5zm-9 1.5L7 8 2.5 11.5V4.5z"/></svg></button>
-  </div>
-  <div class="s-vol">
-    <button id="svb" class="vb"><svg id="svi" viewBox="0 0 20 20" fill="currentColor"><path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z"/><path d="M12.5 7.5a3.5 3.5 0 010 5M14.8 5.2a6.5 6.5 0 010 9.6" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg></button>
-    <div id="svw" class="sw"><div class="sw-track"><div id="svf" class="sw-fill"></div></div><div id="svt" class="sw-thumb"></div></div>
-  </div>
-</div>
- 
-<div id="toast" class="toast"></div>
- 
-<script>
-const SUPABASE_URL = 'https://zjsyoqkxhabkevgyaega.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc3lvcWt4aGFia2V2Z3lhZWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2ODA2MTAsImV4cCI6MjA5NDI1NjYxMH0.mrtRgw2y02CnAnBJNte2urvZy7Od_13-oQZ2_gPDwOo';
-const BUCKET = 'muzik';
- 
-let tracks = [], idx = -1, playing = false, seeking = false, muted = false, lastVol = 0.8;
- 
-const $ = id => document.getElementById(id);
-const audio = $('audio');
- 
-const fmt = s => !s || isNaN(s) ? '0:00' : Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
-const sz = b => !b ? '' : b < 1048576 ? (b/1024).toFixed(0)+' KB' : (b/1048576).toFixed(1)+' MB';
-const getUrl = p => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(p)}`;
- 
-const GRADIENTS = [
-  'linear-gradient(145deg,#4c1d95,#2e1065)',
-  'linear-gradient(145deg,#1e1b4b,#312e81)',
-  'linear-gradient(145deg,#3b0764,#581c87)',
-  'linear-gradient(145deg,#0f172a,#1e1b4b)',
-  'linear-gradient(145deg,#1a1a2e,#16213e)',
-];
- 
-function toast(msg) {
-  $('toast').textContent = msg;
-  $('toast').classList.add('show');
-  setTimeout(() => $('toast').classList.remove('show'), 2400);
-}
- 
-function setS(f, t, p) {
-  const q = Math.max(0, Math.min(1, p));
-  f.style.width = (q*100)+'%';
-  t.style.left = (q*100)+'%';
-}
- 
-function pof(w, e) {
-  const r = w.getBoundingClientRect();
-  const x = e.touches ? e.touches[0].clientX : e.clientX;
-  return Math.max(0, Math.min(1, (x - r.left) / r.width));
-}
- 
-function bind(w, onDrag, onEnd) {
-  let active = false;
-  const start = e => { active = true; onDrag(pof(w,e)); e.preventDefault(); };
-  const move = e => { if (active) { onDrag(pof(w,e)); e.preventDefault(); } };
-  const end = e => {
-    if (!active) return; active = false;
-    const pt = e.changedTouches ? e.changedTouches[0] : e;
-    onEnd && onEnd(pof(w, pt));
-  };
-  w.addEventListener('mousedown', start, {passive:false});
-  w.addEventListener('touchstart', start, {passive:false});
-  document.addEventListener('mousemove', move, {passive:false});
-  document.addEventListener('touchmove', move, {passive:false});
-  document.addEventListener('mouseup', end);
-  document.addEventListener('touchend', end);
-}
- 
-const HI = `<path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z"/><path d="M12.5 7.5a3.5 3.5 0 010 5M14.8 5.2a6.5 6.5 0 010 9.6" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
-const LO = `<path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z"/><path d="M12.5 7.5a3.5 3.5 0 010 5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
-const MU = `<path d="M9.5 4L5.5 7.5H2v5h3.5L9.5 16V4z" opacity=".35"/><path d="M13 8.5l3 3m0-3l-3 3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
- 
-function volIcon(v) { return (muted||v===0) ? MU : v<0.4 ? LO : HI; }
-function setVol(v) {
-  audio.volume = v;
-  const ic = volIcon(v);
-  ['dvi','svi'].forEach(id => { if($(id)) $(id).innerHTML = ic; });
-  ['dvf','dvt','svf','svt'].forEach((id,i) => {
-    if($(id)) { if(i%2===0) $(id).style.width=(v*100)+'%'; else $(id).style.left=(v*100)+'%'; }
-  });
-}
- 
-function setPlay(v) {
-  playing = v;
-  [['dpi','dpai'],['mpi','mpai'],['spi','spai']].forEach(([a,b]) => {
-    if($(a)) $(a).style.display = v ? 'none' : '';
-    if($(b)) $(b).style.display = v ? '' : 'none';
-  });
-}
- 
-function setNow(n) {
-  ['mnow','dnow','snow'].forEach(id => { if($(id)) $(id).textContent = n; });
-}
- 
-function setArt(n) {
-  const g = GRADIENTS[(n||'').length % GRADIENTS.length];
-  $('artbox').style.background = g;
-  $('artbox').textContent = n ? n.charAt(0).toUpperCase() : '♩';
-}
- 
-async function fetchTracks() {
-  try {
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
-      method: 'POST',
-      headers: { Authorization:`Bearer ${SUPABASE_KEY}`, apikey:SUPABASE_KEY, 'Content-Type':'application/json' },
-      body: JSON.stringify({ limit: 500, offset: 0, prefix: '' })
-    });
-    const d = await r.json();
-    tracks = (Array.isArray(d) ? d : [])
-      .filter(f => f.name && /\.(mp3|wav|flac|ogg|m4a|aac)$/i.test(f.name))
-      .map(f => ({ name: f.name.replace(/\.[^.]+$/,''), path: f.name, size: f.metadata?.size||0, url: getUrl(f.name) }));
-  } catch(e) {}
-  render();
-}
- 
-function render() {
-  $('count').textContent = tracks.length;
-  $('seclbl').style.display = tracks.length ? '' : 'none';
-  if (!tracks.length) {
-    $('list').innerHTML = `<div class="empty"><span class="empty-icon">♩</span><p>henüz parça yok — yükle</p></div>`;
-    return;
-  }
-  $('list').innerHTML = tracks.map((t,i) => {
-    const grad = GRADIENTS[t.name.length % GRADIENTS.length];
-    return `
-    <div class="trk${i===idx?' playing':''}" onclick="pick(${i})">
-      <div class="trk-art" style="background:${grad}">
-        ${t.name.charAt(0).toUpperCase()}
-        <div class="play-ind">
-          ${i===idx&&playing
-            ? `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3h2v10H5zm4 0h2v10H9z"/></svg>`
-            : `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5l8 4.5-8 4.5V3.5z"/></svg>`}
+
+      <!-- MOBİL: ALT SATIR -->
+      <div class="player-row mobile-only">
+        <div class="now-playing-mobile" id="nowPlayingMobile">—</div>
+        <div class="controls-mobile">
+          <button class="ctrl-btn" id="mPrevBtn" aria-label="Önceki">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4h2v12H4zm10 1.5L8 10l6 4.5V5.5z"/></svg>
+          </button>
+          <button class="ctrl-btn ctrl-main" id="mPlayBtn" aria-label="Oynat/Durdur">
+            <svg class="icon-play" viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l12 6-12 6V4z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 20 20" fill="currentColor" style="display:none"><path d="M6 4h3v12H6zm5 0h3v12h-3z"/></svg>
+          </button>
+          <button class="ctrl-btn" id="mNextBtn" aria-label="Sonraki">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M14 4h2v12h-2zM4 5.5L10 10 4 14.5V5.5z"/></svg>
+          </button>
         </div>
       </div>
-      <div class="trk-info">
-        <div class="tname">${t.name}</div>
-        ${t.size ? `<div class="tmeta">${sz(t.size)}</div>` : ''}
+
+      <!-- DESKTOP: SOL (şarkı adı) -->
+      <div class="player-left desktop-only">
+        <div class="now-art" id="deskArt">♩</div>
+        <div class="now-info">
+          <div class="now-label">Şu an çalıyor</div>
+          <div class="now-name" id="deskNowName">—</div>
+        </div>
       </div>
-      <div class="dur" id="d-${i}">—</div>
-      <button class="del" onclick="event.stopPropagation();rem(${i})">✕</button>
-    </div>`;
-  }).join('');
-}
- 
-window.pick = function(i) {
-  if (idx===i && playing) { audio.pause(); setPlay(false); render(); }
-  else play(i);
-};
- 
-function play(i) {
-  if (!tracks[i]) return;
-  idx = i; audio.src = tracks[i].url; audio.currentTime = 0;
-  audio.play().catch(()=>{});
-  setNow(tracks[i].name); setArt(tracks[i].name);
-  $('bar').classList.add('active');
-  setPlay(true); render();
-}
- 
-window.rem = async function(i) {
-  if (!confirm(`"${tracks[i].name}" silinsin mi?`)) return;
-  const p = tracks[i].path;
-  if (idx===i) { audio.pause(); audio.src=''; setPlay(false); idx=-1; $('bar').classList.remove('active'); closeSheet(false); }
-  else if (idx>i) idx--;
-  await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(p)}`, {
-    method: 'DELETE', headers: { Authorization:`Bearer ${SUPABASE_KEY}`, apikey:SUPABASE_KEY }
-  });
-  toast('Silindi ✓');
-  fetchTracks();
-};
- 
-async function addFiles(files) {
-  const a = [...files].filter(f => f.type.startsWith('audio/') || /\.(mp3|wav|flac|ogg|m4a|aac)$/i.test(f.name));
-  if (!a.length) return;
-  const upbar = $('upbar'); upbar.classList.add('active');
-  const fill = $('upfill'), pct = $('uppct'), txt = $('uptext');
-  let ok = 0;
-  for (let i = 0; i < a.length; i++) {
-    txt.textContent = a[i].name.replace(/\.[^.]+$/,'');
-    const p = ((i/a.length)*100).toFixed(0);
-    fill.style.width = p+'%'; pct.textContent = p+'%';
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(a[i].name)}`, {
-      method:'POST', headers:{ Authorization:`Bearer ${SUPABASE_KEY}`, apikey:SUPABASE_KEY, 'Content-Type':a[i].type||'audio/mpeg', 'x-upsert':'true' },
-      body: a[i]
-    });
-    if (r.ok) ok++;
-  }
-  fill.style.width = '100%'; pct.textContent = '100%';
-  setTimeout(() => { upbar.classList.remove('active'); fill.style.width='0%'; }, 700);
-  toast(`${ok}/${a.length} parça yüklendi ✓`);
-  fetchTracks();
-}
- 
-function tog() { if(idx<0)return; if(playing){audio.pause();setPlay(false)}else{audio.play().catch(()=>{});setPlay(true)} render(); }
-function nx() { if(tracks.length) play((idx+1)%tracks.length); }
-function pr() { if(!tracks.length)return; if(audio.currentTime>3){audio.currentTime=0;return;} play((idx-1+tracks.length)%tracks.length); }
- 
-['dpp','mpp','spp'].forEach(id => { if($(id)) $(id).onclick = tog; });
-['dnext','mnext','snext'].forEach(id => { if($(id)) $(id).onclick = nx; });
-['dprev','mprev','sprev'].forEach(id => { if($(id)) $(id).onclick = pr; });
- 
-['dvb','svb'].forEach(id => {
-  if(!$(id)) return;
-  $(id).onclick = () => {
-    muted = !muted;
-    if (muted) { lastVol = audio.volume || 0.8; setVol(0); }
-    else setVol(lastVol || 0.8);
-  };
-});
- 
-// Seek bars
-function seekTo(p) {
-  if (!audio.duration) return;
-  audio.currentTime = p * audio.duration;
-  ['mpf','mpf','dpf','spf'].forEach((id,i) => {});
-  updateBars();
-}
- 
-['mpw','dpw','spw'].forEach(id => {
-  if (!$(id)) return;
-  bind($(id), p => {
-    seeking = true;
-    if (audio.duration) { audio.currentTime = p * audio.duration; }
-    updateBars();
-  }, () => { seeking = false; });
-});
- 
-['dvw','svw'].forEach(id => {
-  if (!$(id)) return;
-  bind($(id), p => { muted = false; lastVol = p; setVol(p); });
-});
- 
-function updateBars() {
-  if (!audio.duration) return;
-  const p = audio.currentTime / audio.duration;
-  [['mpf','mpt'],['dpf','dpt'],['spf','spt']].forEach(([f,t]) => {
-    if($(f)) setS($(f),$(t),p);
-  });
-  const ct = fmt(audio.currentTime), dt = fmt(audio.duration);
-  ['mct','dct','sct'].forEach(id => { if($(id)) $(id).textContent = ct; });
-  ['mdt','ddt','sdt'].forEach(id => { if($(id)) $(id).textContent = dt; });
-  const d = $('d-'+idx);
-  if (d && d.textContent === '—') d.textContent = dt;
-}
- 
-audio.addEventListener('timeupdate', () => { if (!seeking) updateBars(); });
-audio.addEventListener('ended', () => {
-  if (idx < tracks.length-1) play(idx+1);
-  else { setPlay(false); render(); }
-});
- 
-// Sheet (mobile full screen player)
-function openSheet() { if(window.innerWidth>899||idx<0)return; $('sheet').classList.add('spring','active'); }
-function closeSheet(spring=true) { $('sheet').classList.toggle('spring',spring); $('sheet').classList.remove('active'); }
- 
-$('sclose').onclick = () => closeSheet();
-$('bar').addEventListener('click', e => {
-  if (window.innerWidth<=899 && !e.target.closest('button') && !e.target.closest('.sw')) openSheet();
-});
- 
-// Swipe down to close sheet
-let sy=null, dy=0;
-$('sheet').addEventListener('touchstart', e => { sy=e.touches[0].clientY; dy=0; }, {passive:true});
-$('sheet').addEventListener('touchmove', e => {
-  if(sy===null)return;
-  const d = e.touches[0].clientY - sy;
-  if(d>0){dy=d;$('sheet').style.transform=`translateY(${Math.min(60,d/5)}%)`;}
-}, {passive:true});
-$('sheet').addEventListener('touchend', () => {
-  $('sheet').style.transform='';
-  if(sy!==null && dy>80) closeSheet(true);
-  sy=null; dy=0;
-});
- 
-// File input
-$('file').addEventListener('change', e => addFiles(e.target.files));
-document.addEventListener('drop', e => { e.preventDefault(); addFiles(e.dataTransfer.files); });
-document.addEventListener('dragover', e => e.preventDefault());
- 
-// Init
-setVol(0.8);
-fetchTracks();
-</script>
+
+      <!-- DESKTOP: ORTA (kontroller + seek) -->
+      <div class="player-center desktop-only">
+        <div class="controls-desk">
+          <button class="ctrl-btn" id="dPrevBtn" aria-label="Önceki">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4h2v12H4zm10 1.5L8 10l6 4.5V5.5z"/></svg>
+          </button>
+          <button class="ctrl-btn ctrl-main" id="dPlayBtn" aria-label="Oynat/Durdur">
+            <svg class="icon-play" viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l12 6-12 6V4z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 20 20" fill="currentColor" style="display:none"><path d="M6 4h3v12H6zm5 0h3v12h-3z"/></svg>
+          </button>
+          <button class="ctrl-btn" id="dNextBtn" aria-label="Sonraki">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M14 4h2v12h-2zM4 5.5L10 10 4 14.5V5.5z"/></svg>
+          </button>
+        </div>
+        <div class="seek-row">
+          <span class="time-label" id="dCurTime">0:00</span>
+          <div class="seek-wrap" id="dSeekWrap">
+            <div class="seek-track">
+              <div class="seek-fill" id="dSeekFill"></div>
+            </div>
+            <div class="seek-thumb" id="dSeekThumb"></div>
+          </div>
+          <span class="time-label" id="dDurTime">0:00</span>
+        </div>
+      </div>
+
+      <!-- DESKTOP: SAĞ (volume) -->
+      <div class="player-right desktop-only">
+        <button class="vol-btn" id="dVolBtn" aria-label="Ses">
+          <svg class="icon-vol-hi" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M11 3.5v13l-5-4H2V7.5h4l5-4zm2.5 2.8a5 5 0 010 7.4M16 4a8 8 0 010 12"/>
+          </svg>
+          <svg class="icon-vol-lo" viewBox="0 0 20 20" fill="currentColor" style="display:none">
+            <path d="M11 3.5v13l-5-4H2V7.5h4l5-4zm2.5 2.8a5 5 0 010 7.4"/>
+          </svg>
+          <svg class="icon-vol-mute" viewBox="0 0 20 20" fill="currentColor" style="display:none">
+            <path d="M11 3.5v13l-5-4H2V7.5h4l5-4zM14 8l4 4m0-4l-4 4"/>
+          </svg>
+        </button>
+        <div class="seek-wrap vol-wrap" id="dVolWrap">
+          <div class="seek-track">
+            <div class="seek-fill" id="dVolFill"></div>
+          </div>
+          <div class="seek-thumb" id="dVolThumb"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       MOBİL TAM EKRAN OYNATICI (sheet)
+  ══════════════════════════════════ -->
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle" id="sheetHandle"></div>
+
+    <div class="sheet-header">
+      <span class="sheet-label">Şu an çalıyor</span>
+      <button class="sheet-close" id="sheetClose" aria-label="Kapat">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      </button>
+    </div>
+
+    <!-- Kapak -->
+    <div class="sheet-art-wrap">
+      <div class="sheet-art" id="sheetArt">
+        <span class="sheet-art-letter" id="sheetArtLetter">♩</span>
+      </div>
+    </div>
+
+    <!-- Şarkı adı -->
+    <div class="sheet-track-info">
+      <div class="sheet-track-name" id="sheetTrackName">—</div>
+      <div class="sheet-track-sub">SESLER MÜZİK</div>
+    </div>
+
+    <!-- İlerleme -->
+    <div class="seek-row sheet-seek">
+      <span class="time-label" id="sCurTime">0:00</span>
+      <div class="seek-wrap" id="sSeekWrap">
+        <div class="seek-track">
+          <div class="seek-fill" id="sSeekFill"></div>
+        </div>
+        <div class="seek-thumb" id="sSeekThumb"></div>
+      </div>
+      <span class="time-label" id="sDurTime">0:00</span>
+    </div>
+
+    <!-- Kontroller -->
+    <div class="sheet-controls">
+      <button class="ctrl-btn sheet-ctrl-btn" id="sPrevBtn" aria-label="Önceki">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4h2v12H4zm10 1.5L8 10l6 4.5V5.5z"/></svg>
+      </button>
+      <button class="ctrl-btn ctrl-main sheet-ctrl-main" id="sPlayBtn" aria-label="Oynat/Durdur">
+        <svg class="icon-play" viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l12 6-12 6V4z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 20 20" fill="currentColor" style="display:none"><path d="M6 4h3v12H6zm5 0h3v12h-3z"/></svg>
+      </button>
+      <button class="ctrl-btn sheet-ctrl-btn" id="sNextBtn" aria-label="Sonraki">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M14 4h2v12h-2zM4 5.5L10 10 4 14.5V5.5z"/></svg>
+      </button>
+    </div>
+
+    <!-- Volume (sheet) -->
+    <div class="sheet-vol">
+      <button class="vol-btn" id="sVolBtn" aria-label="Ses">
+        <svg class="icon-vol-hi" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M11 3.5v13l-5-4H2V7.5h4l5-4zm2.5 2.8a5 5 0 010 7.4M16 4a8 8 0 010 12"/>
+        </svg>
+        <svg class="icon-vol-lo" viewBox="0 0 20 20" fill="currentColor" style="display:none">
+          <path d="M11 3.5v13l-5-4H2V7.5h4l5-4zm2.5 2.8a5 5 0 010 7.4"/>
+        </svg>
+        <svg class="icon-vol-mute" viewBox="0 0 20 20" fill="currentColor" style="display:none">
+          <path d="M11 3.5v13l-5-4H2V7.5h4l5-4zM14 8l4 4m0-4l-4 4"/>
+        </svg>
+      </button>
+      <div class="seek-wrap vol-wrap" id="sVolWrap">
+        <div class="seek-track">
+          <div class="seek-fill" id="sVolFill"></div>
+        </div>
+        <div class="seek-thumb" id="sVolThumb"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast bildirimi -->
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="app.js"></script>
 </body>
 </html>
- 
